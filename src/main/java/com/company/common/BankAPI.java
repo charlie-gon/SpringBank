@@ -21,7 +21,7 @@ import com.google.gson.JsonParser;
 public class BankAPI {
 	
 	
-	// 카카오 로그인
+	// 카카오 로그인(토큰 발급)
 		public String getAccessToken (String authorize_code) {
 	        String access_Token = "";
 	        String refresh_Token = "";

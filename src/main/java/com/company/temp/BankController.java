@@ -19,7 +19,8 @@ public class BankController {
 	
 	@Autowired BankAPI bankAPI;
 	
-	// API 로컬 테스트 페이지 참고 + 오픈뱅킹공동업무_API_명세서 p.14
+	// API 로컬 테스트 페이지 참고 + 오픈뱅킹공동업무_API_명세서 p.26(계좌등록확인)
+	// 참고 https://developers.kftc.or.kr/dev/doc/open-banking#doclist_2_1
 	@RequestMapping("/auth") 
 	public String auth() throws Exception {
 		
@@ -53,13 +54,15 @@ public class BankController {
 		return "redirect:"+reqURL+"?"+ qstr.toString();	  
 	}
 	
+	// 토큰발급
+	// 참고 https://developers.kftc.or.kr/dev/doc/open-banking#doclist_2_1
 	@RequestMapping("/callback")
 	public String callback(@RequestParam Map<String, Object>map, HttpSession session) {
-		System.out.println("코드값 =====>" + map.get("code"));
+		System.out.println("코드값 =====>" + map.get("code")); // 사용자인증 API를 통해 Authorization Code 획득!(사용자의 동의를 받았다)
 		String code = map.get("code").toString();
 		
 		//access_token 받기
-		String access_token = bankAPI.getAccessToken(code);
+		String access_token = bankAPI.getAccessToken(code); // Authorization Code를 통해 Access Token 받기!
 		System.out.println("access_token =====> " + access_token);
 		
 		//session
