@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>    
+    <Appenders>
+        <Console name="console_root" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d %5p %m%n" />
+        </Console>
+         <Console name="console_com" target="SYSTEM_OUT">
+         	<!-- PatternLayout 설정 참고 자료: https://velog.io/@bread_dd/Log4j-2-
+         		%EC%A0%9C%EB%8C%80%EB%A1%9C-%EC%82%AC%EC%9A%A9%ED%95%98%EA%B8%B0-%EA%B0%9C%EB%85%90 -->
+            <PatternLayout pattern="%d{dd HH:mm} %5p [%c{-3}] %l %m%n" />
+        </Console>
+
+	<File name="MyFile" fileName="d:/logs/app.log">
+		<PatternLayout>
+			<HtmlLayout datePattern="ISO8601" timezone="GMT+9" />
+		</PatternLayout>
+	</File>
+               
+    </Appenders>
+    
+    <!-- log4j2 세부 설정 참고: https://developyo.tistory.com/33 -->
+    
+  <Loggers>
+  
+	<Logger name="java.sql" level="debug" additivity="false">
+		<AppenderRef ref="console_com" />
+	</Logger>
+	<Logger name="jdbc.sqltiming" level="INFO" additivity="false">
+		<AppenderRef ref="console_com" />
+	</Logger>
+	<Logger name="egovframework" level="debug" additivity="false">
+		<AppenderRef ref="console_com" />
+	</Logger>
+	<Logger name="com" level="debug" additivity="false">
+		<AppenderRef ref="console_com" />
+	</Logger>
+	<Logger name="org.springframework" level="debug"
+		additivity="false">
+		<AppenderRef ref="console_com" />
+	</Logger>
+        
+        <!-- 개발 중에는 level="debug"로 설정하여 세부 정보 확인 필요! -->
+        <Root level="error"> 
+            <AppenderRef ref="console_com" />
+           <!--  <AppenderRef ref="MyFile" /> -->
+        </Root>
+    </Loggers>
+</Configuration>
