@@ -90,7 +90,7 @@ public class BankAPI {
 		
 		// 기관인증
 		public Map<String, Object> getOrgAccessToken() {
-			Map<String, Object> map = new HashMap();
+			Map<String, Object> map = new HashMap(); // 하나 이상의 파라미터 값을 다루기 위해 Map 사용
 			String reqURL = host + "/oauth/2.0/token";
 
 			try {
@@ -141,7 +141,7 @@ public class BankAPI {
 			return map;
 		} 
 		
-		// 사용자 정보 조회(pdf p.36)
+		// 등록 계좌 조회(pdf p.36)
 		public HashMap<String, Object> getAccountList (String access_token, String use_num) {
 		    // 요청하는 클라이언트마다 가진 정보가 다를 수 있기에 HashMap타입으로 선언
 		    HashMap<String, Object> map = new HashMap<>();
@@ -197,15 +197,22 @@ public class BankAPI {
 			return str;
 		}
 		
+		// System.currentTimeMills
+		// 1970년 1월1일부터 경과한 시간을 long값이자 밀리세컨(1/1000초)값으로 리턴.
+		// 총 13자리 숫자로 리턴.
 		
 		public String getRand() { // 난수 생성
 			long time = System.currentTimeMillis();
 			String str = Long.toString(time);
-			return Long.toString(time).substring(str.length()-9); // 총 13자리 숫자 중 9자리 제거
+			return Long.toString(time).substring(str.length()-9); 
+			// currentTimeMills가 반환하는 총 13자리 숫자 중 9자리 제거 = 4
+			// Long.toString(time).substring(4) => 13자리 숫자에 substr(4) 적용되어 인덱스 4부터 시작하면(index[4,5,6,7,8,9,10,11,12] => 9자리 숫자 리턴
 		}
 		
 		public String getRand32() { // 32자리 난수 생성
-			return "";
+			long time = System.currentTimeMillis();
+			String str = Long.toString(time);
+			return Long.toString(time).substring((str.length()*2)-4); // (13*2)-4 = 32니까?
 		}
 		
 		// 잔액조회
