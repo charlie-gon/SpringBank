@@ -9,15 +9,21 @@ import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.company.common.BankAPI;
+import com.company.common.BankVO;
 
 @Controller
 public class BankController {
 	
 	@Autowired BankAPI bankAPI;
+	
+	String access_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiIxMTAwNzcwNTM3Iiwic2NvcGUiOlsiaW5xdWlyeSIsImxvZ2luIiwidHJhbnNmZXIiXSwiaXNzIjoiaHR0cHM6Ly93d3cub3BlbmJhbmtpbmcub3Iua3IiLCJleHAiOjE2MjMyMDY2MTEsImp0aSI6ImQ0NzU0Yjk4LTM4ZGEtNDVkMi04Y2E1LTNkNGYxZWMyZjc0MiJ9.ldyO_HdD-h9Yd2_YSn_A_AJKZwf3xjqLjwqa5MK2ZtY";
+	String use_num = "1100770537";
 	
 	// API 로컬 테스트 페이지 참고 + 오픈뱅킹공동업무_API_명세서 p.26(계좌등록확인)
 	// 참고 https://developers.kftc.or.kr/dev/doc/open-banking#doclist_2_1
@@ -54,7 +60,7 @@ public class BankController {
 		return "redirect:"+reqURL+"?"+ qstr.toString();	  
 	}
 	
-	// 토큰발급
+	// 사용자 토큰발급
 	// 참고 https://developers.kftc.or.kr/dev/doc/open-banking#doclist_2_1
 	@RequestMapping("/callback")
 	public String callback(@RequestParam Map<String, Object>map, HttpSession session) {
@@ -71,18 +77,43 @@ public class BankController {
 		return "home";
 	}
 	
-	@RequestMapping("/userinfo")
-	public String userinfo(@RequestParam Map<String, Object>map, HttpServletRequest request) {
-		
-		//String access_token = request.getParameter("access_token");
-		
-		String access_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiIxMTAwNzcwNTM3Iiwic2NvcGUiOlsiaW5xdWlyeSIsImxvZ2luIiwidHJhbnNmZXIiXSwiaXNzIjoiaHR0cHM6Ly93d3cub3BlbmJhbmtpbmcub3Iua3IiLCJleHAiOjE2MjMxNDExMjcsImp0aSI6IjhhYjM0M2E5LThjYjUtNGMyNy04NTk4LWQ2NTU1N2MxMGQ3ZiJ9._b6aj6RnnsMjt889qfPE66-Uq9jE3l7DLgN4xRPd9JE";
-		String use_num = "1100770537";
-		
-		Map<String, Object> userinfo = bankAPI.getUserInfo(access_token, use_num);
-		System.out.println("userinfo " + userinfo);
+	// 사용자 토큰발급
+	@RequestMapping("/getOrgAuthorize")
+	public String getAccessToken() {
+		Map<String, Object> map = bankAPI.getOrgAccessToken();
+		System.out.println("access_token =====> " + map.get("access_token"));
 		
 		return "home";
 	}
-
+	
+	
+	@RequestMapping("/getAccountList")
+	public String userinfo(HttpServletRequest request, Model model) {
+		
+		//String access_token = request.getParameter("access_token");
+		
+		Map<String, Object> map = bankAPI.getAccountList(access_token, use_num);
+		System.out.println("map =====> " + map);
+		model.addAttribute("list", map);
+		
+		return "bank/getAccountList";
+	}
+	
+	@RequestMapping("/getBalance")
+	public String getBalance(BankVO vo, Model model) {
+		vo.setAccess_token(access_token);
+		Map<String, Object>map = bankAPI.getBalance(vo);
+		System.out.println("잔액 =====> " + map);
+		model.addAttribute("balance", map);
+		return "bank/getBalance";
+	}
+	
+	@ResponseBody // ajax 호출!
+	@RequestMapping("/ajaxGetBalance")
+	public Map<String, Object> ajaxGetBalance(BankVO vo, Model model){
+		vo.setAccess_token(access_token);
+		Map<String, Object>map = bankAPI.getBalance(vo);
+		System.out.println("잔액 =====> " + map);
+		return map; // <== Responsebody에 의해 데이터 값이 json으로 넘어간다
+	}
 }

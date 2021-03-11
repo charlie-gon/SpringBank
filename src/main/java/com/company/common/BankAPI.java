@@ -7,25 +7,33 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 @Component
 public class BankAPI {
 	
+	String host = "https://testapi.openbanking.or.kr";
+	String client_id="85bf2e88-ffb6-4387-b218-1f984ea8836e";
+	String client_secret="e4ff075e-e2f6-4fd5-921f-a76a49fe9234";
+	String redirect_uri="http://localhost/temp/callback";
+	String bank_tran_id = "M202111671"; // 이용기관코드
 	
-	// 카카오 로그인(토큰 발급)
+	
+	// 사용자 토큰발급 API (3-legged)
 		public String getAccessToken (String authorize_code) {
+
 	        String access_Token = "";
 	        String refresh_Token = "";
-	        String reqURL = " https://testapi.openbanking.or.kr/oauth/2.0/token";
+	        String reqURL = host + "/oauth/2.0/token";
 	        
 	        try {
 	            URL url = new URL(reqURL);
@@ -38,10 +46,10 @@ public class BankAPI {
 	            //    POST 요청에 필요로 요구하는 파라미터 스트림을 통해 전송
 	            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
 	            StringBuilder sb = new StringBuilder();
-	            sb.append("code="+authorize_code);
-	            sb.append("&client_id=85bf2e88-ffb6-4387-b218-1f984ea8836e");
-	            sb.append("&client_secret=e4ff075e-e2f6-4fd5-921f-a76a49fe9234");
-	            sb.append("&redirect_uri=http://localhost/temp/callback");
+	            sb.append("code=").append(authorize_code);
+	            sb.append("&client_id=").append(client_id);
+	            sb.append("&client_secret=").append(client_secret);
+	            sb.append("&redirect_uri=").append(redirect_uri);
 	            sb.append("&grant_type=authorization_code");
 	            bw.write(sb.toString());
 	            bw.flush();
@@ -80,11 +88,63 @@ public class BankAPI {
 	        return access_Token;
 	    }
 		
+		// 기관인증
+		public Map<String, Object> getOrgAccessToken() {
+			Map<String, Object> map = new HashMap();
+			String reqURL = host + "/oauth/2.0/token";
+
+			try {
+				URL url = new URL(reqURL);
+				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+				// POST 요청을 위해 기본값이 false인 setDoOutput을 true로
+				conn.setRequestMethod("POST");
+				conn.setDoOutput(true);
+
+				// header
+				conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+
+				// POST 요청에 필요로 요구하는 파라미터 스트림을 통해 전송
+				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
+				StringBuilder sb = new StringBuilder();
+				sb.append("client_id=").append(client_id);
+				sb.append("&client_secret=").append(client_secret);
+				sb.append("&scope=oob");
+				sb.append("&grant_type=client_credentials");
+				bw.write(sb.toString());
+				bw.flush();
+
+				// 결과 코드가 200이라면 성공
+				int responseCode = conn.getResponseCode();
+				System.out.println("responseCode : " + responseCode);
+
+				// 요청을 통해 얻은 JSON타입의 Response 메세지 읽어오기
+				BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+				String line = "";
+				String result = "";
+
+				while ((line = br.readLine()) != null) {
+					result += line;
+				}
+				System.out.println("response body : " + result);
+
+				  Gson gson = new Gson();
+			      map = gson.fromJson(result, HashMap.class);
+
+				br.close();
+				bw.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			return map;
+		} 
+		
 		// 사용자 정보 조회(pdf p.36)
-		public HashMap<String, Object> getUserInfo (String access_token, String use_num) {
-		    
+		public HashMap<String, Object> getAccountList (String access_token, String use_num) {
 		    // 요청하는 클라이언트마다 가진 정보가 다를 수 있기에 HashMap타입으로 선언
-		    HashMap<String, Object> userInfo = new HashMap<>();
+		    HashMap<String, Object> map = new HashMap<>();
 		    String reqURL = "https://testapi.openbanking.or.kr/v2.0/account/list";
 		    String user_seq_no = use_num;
 		    String include_cancel_yn = "Y";
@@ -116,12 +176,79 @@ public class BankAPI {
 		        }
 		        System.out.println("response body : " + result);
 		        
+		        // String값을 map에 담아서 리턴
+		        Gson gson = new Gson();
+		        map = gson.fromJson(result, HashMap.class);
+		        
 		        
 		    } catch (IOException e) {
 		        // TODO Auto-generated catch block
 		        e.printStackTrace();
 		    }
 		    
-		    return userInfo;
+		    return map;
+		}
+		
+		public String getDate() { // 요청일시 설정
+			String str = "";
+			Date date = new Date();
+			SimpleDateFormat format = new SimpleDateFormat("yyyyMMddhhmmss");
+			str = format.format(date);
+			return str;
+		}
+		
+		
+		public String getRand() { // 난수 생성
+			long time = System.currentTimeMillis();
+			String str = Long.toString(time);
+			return Long.toString(time).substring(str.length()-9); // 총 13자리 숫자 중 9자리 제거
+		}
+		
+		public String getRand32() { // 32자리 난수 생성
+			return "";
+		}
+		
+		// 잔액조회
+		public HashMap<String, Object> getBalance(BankVO vo) {
+			// 요청하는 클라이언트마다 가진 정보가 다를 수 있기에 HashMap타입으로 선언
+			HashMap<String, Object> map = new HashMap<>();
+			String reqURL = host + "/v2.0/account/balance/fin_num";
+
+			StringBuilder qstr = new StringBuilder();
+			qstr.append("bank_tran_id=").append(bank_tran_id + "U" + getRand())
+			.append("&fintech_use_num=").append(vo.getFintech_use_num())
+			.append("&tran_dtime=").append(getDate());
+
+			try {
+				URL url = new URL(reqURL + "?" + qstr);
+				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+				conn.setRequestMethod("GET");
+
+				// 요청에 필요한 Header에 포함될 내용
+				conn.setRequestProperty("Authorization", "Bearer " + vo.getAccess_token());
+				// 출력되는 값이 200이면 정상작동
+				int responseCode = conn.getResponseCode();
+				System.out.println("responseCode : " + responseCode);
+
+				BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+
+				String line = "";
+				String result = "";
+
+				while ((line = br.readLine()) != null) {
+					result += line;
+				}
+				System.out.println("response body : " + result);
+
+				// String값을 map에 담아서 리턴
+				Gson gson = new Gson();
+				map = gson.fromJson(result, HashMap.class);
+
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			return map;
 		}
 }
