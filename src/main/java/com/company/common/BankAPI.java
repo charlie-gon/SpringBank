@@ -12,7 +12,12 @@ import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -26,6 +31,7 @@ public class BankAPI {
 	String client_secret="e4ff075e-e2f6-4fd5-921f-a76a49fe9234";
 	String redirect_uri="http://localhost/temp/callback";
 	String bank_tran_id = "M202111671"; // 이용기관코드
+	String org_access_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJNMjAyMTExNjcxIiwic2NvcGUiOlsib29iIl0sImlzcyI6Imh0dHBzOi8vd3d3Lm9wZW5iYW5raW5nLm9yLmtyIiwiZXhwIjoxNjIzMzA2NjAzLCJqdGkiOiI5OWM1NWIxMS1jNDkyLTQ1MTYtYTBiZC04YmNmYWJlYmRkZGMifQ.klLob1u6UFoPZgZ-Ie8_3LaIiiXvktKMjB8ojw_knmM";
 	
 	
 	// 사용자 토큰발급 API (3-legged)
@@ -201,7 +207,7 @@ public class BankAPI {
 		// 1970년 1월1일부터 경과한 시간을 long값이자 밀리세컨(1/1000초)값으로 리턴.
 		// 총 13자리 숫자로 리턴.
 		
-		public String getRand() { // 난수 생성
+		public String getRand() { // 9자리 난수 생성
 			long time = System.currentTimeMillis();
 			String str = Long.toString(time);
 			return Long.toString(time).substring(str.length()-9); 
@@ -257,5 +263,29 @@ public class BankAPI {
 			}
 
 			return map;
+		}
+		
+		// 기관인증을 RestTemplate으로!
+		public Map<String, Object> getOrgAccessTokenRestTemplate() {
+			String reqURL = host + "/oauth/2.0/token";   
+			
+	        MultiValueMap<String, String> param = new LinkedMultiValueMap<String, String>();
+	        param.add("client_id", client_id);
+	        param.add("client_secret", client_secret);
+	        param.add("scope", "oob");
+	        param.add("grant_type", "client_credentials");
+
+	        HttpHeaders headers = new HttpHeaders();
+	        headers.set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+
+	        HttpEntity<MultiValueMap<String, String>> request = 
+	        		new HttpEntity<MultiValueMap<String, String>>( param, headers);
+	        
+	        RestTemplate restTemplate = new RestTemplate();
+	        Map map = restTemplate.postForObject(
+	        		reqURL,
+			        request,
+			        Map.class		);
+	        return map;
 		}
 }

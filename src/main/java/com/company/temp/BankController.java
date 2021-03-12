@@ -10,12 +10,14 @@ import javax.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.company.common.BankAPI;
 import com.company.common.BankVO;
+import com.company.common.MovieAPI;
 
 @Controller
 public class BankController {
@@ -77,7 +79,7 @@ public class BankController {
 		return "home";
 	}
 	
-	// 사용자 토큰발급
+	// 기관인증
 	@RequestMapping("/getOrgAuthorize")
 	public String getAccessToken() {
 		Map<String, Object> map = bankAPI.getOrgAccessToken();
@@ -85,6 +87,15 @@ public class BankController {
 		
 		return "home";
 	}
+	
+	// 사용자 토큰발급_RestTemplate 활용
+		@RequestMapping("/getOrgAccessTokenRestTemplate")
+		public String getOrgAccessTokenRestTemplate() {
+			Map<String, Object> map = bankAPI.getOrgAccessTokenRestTemplate();
+			System.out.println("access_token =====> " + map.get("access_token"));
+			
+			return "home";
+		}
 	
 	
 	@RequestMapping("/getAccountList")
@@ -116,4 +127,6 @@ public class BankController {
 		System.out.println("잔액 =====> " + map);
 		return map; // <== Responsebody에 의해 데이터 값이 json으로 넘어간다
 	}
+	
+	
 }
