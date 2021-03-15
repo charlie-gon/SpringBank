@@ -1,8 +1,14 @@
 package com.company.temp;
 
+import java.io.IOException;
+import java.sql.Connection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -12,10 +18,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.company.temp.service.impl.EmpMapper;
 
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+
 @Controller
 public class ExcelPdfController {
 	
 	@Autowired EmpMapper empMapper;
+	@Autowired DataSource dataSource;
 	
 	@RequestMapping("/getEmpExcel")
 	public String getEmpExcel(Model model) {
@@ -49,11 +62,15 @@ public class ExcelPdfController {
 		return "pdfView";
 	}
 	
-	// empList3
+	// empList3(pdf p.12)
 	@RequestMapping("/pdf/empList3")
-	public String empList3(Model model) {
-		model.addAttribute("filename", "/reports/empListt3.jasper");
-		return "pdfView";
+	public void empList3(HttpServletResponse response) throws Exception {
+		Connection conn = dataSource.getConnection();
+		//소스파일 컴파일하여 저장 : compileReportToFile
+		 String jrxmlFile = getClass().getResource("/reports/empListt3.jrxml").getFile();
+		String jasperFile = JasperCompileManager.compileReportToFile( jrxmlFile );
+		JasperPrint jasperPrint = JasperFillManager.fillReport(jasperFile, null, conn);
+		JasperExportManager.exportReportToPdfStream(jasperPrint, response.getOutputStream());
 	}
 	
 	
