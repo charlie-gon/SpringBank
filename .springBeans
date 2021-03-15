@@ -8,11 +8,9 @@
 	<enableImports><![CDATA[true]]></enableImports>
 	<configs>
 		<config>src/main/webapp/WEB-INF/spring/servlet-context.xml</config>
+		<config>src/main/resources/mappings/emp_mapper.xml</config>
 	</configs>
 	<autoconfigs>
-		<config>src/test/resources/config/mybatis-context.xml</config>
-		<config>src/test/resources/config/datasource-context.xml</config>
-		<config>src/main/webapp/WEB-INF/spring/root-context.xml</config>
 	</autoconfigs>
 	<configSets>
 	</configSets>
